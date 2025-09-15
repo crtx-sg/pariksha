@@ -1,369 +1,357 @@
-from flask import Flask, request, render_template_string, send_file
-import io
+#!/usr/bin/env python3
+"""
+Header Management System for Pariksha - Question Paper Drafting System
+Provides functionality to create, manage, and format headers for question papers
+"""
 
-app = Flask(__name__)
+import os
+import sys
+import json
+import argparse
+from datetime import datetime
+from pathlib import Path
 
-# HTML template for the form with dropdowns for positions
-form_template = '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>QP Header Authoring Template</title>
-    <style>
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        select, input, textarea { width: 200px; padding: 5px; }
-    </style>
-</head>
-<body>
-    <h1>Create Question Paper Header</h1>
-    <form method="POST">
-        <div class="form-group">
-            <h2>Logo Details</h2>
-            <label>Logo File Path:</label><br>
-            <input type="text" name="logo_path" value="./downloads/faps.jpeg" required><br><br>
-            <label>Width (px):</label><br>
-            <select name="logo_width">
-                <option value="100px">100px (Default)</option>
-                <option value="80px">80px</option>
-                <option value="120px">120px</option>
-            </select><br><br>
-            <label>Margin Right (px):</label><br>
-            <select name="logo_margin_right">
-                <option value="20px">20px (Default)</option>
-                <option value="10px">10px</option>
-                <option value="30px">30px</option>
-            </select><br><br>
-            <label>Position:</label><br>
-            <select name="logo_position">
-                <option value="left">left (Default)</option>
-                <option value="top-center">top-center</option>
-                <option value="right">right</option>
-            </select>
-        </div>
 
-        <div class="form-group">
-            <h2>Title Details (3 Lines)</h2>
-            <label>Line 1 Text (e.g., School Name):</label><br>
-            <input type="text" name="title_line1" value="THE FRANK ANTHONY PUBLIC SCHOOL, BENGALURU" required><br>
-            <label>Font Size:</label><br>
-            <select name="title_font_size1">
-                <option value="24px">24px (Default)</option>
-                <option value="20px">20px</option>
-                <option value="28px">28px</option>
-            </select><br>
-            <label>Font Weight:</label><br>
-            <select name="title_font_weight1">
-                <option value="bold">bold (Default)</option>
-                <option value="normal">normal</option>
-                <option value="600">600</option>
-            </select><br><br>
+class HeaderGenerator:
+    """Class to generate and manage question paper headers"""
 
-            <label>Line 2 Text (e.g., Examination Name):</label><br>
-            <input type="text" name="title_line2" value="FIRST TERM EXAMINATION – 2025" required><br>
-            <label>Font Size:</label><br>
-            <select name="title_font_size2">
-                <option value="20px">20px (Default)</option>
-                <option value="18px">18px</option>
-                <option value="22px">22px</option>
-            </select><br><br>
+    def __init__(self):
+        self.default_templates = {
+            "standard": {
+                "school_name": "SCHOOL NAME",
+                "exam_name": "EXAMINATION NAME",
+                "subject": "SUBJECT",
+                "class_grade": "CLASS/GRADE",
+                "duration": "3 Hours",
+                "max_marks": "100",
+                "date": "",
+                "instructions": [
+                    "All questions are compulsory.",
+                    "Write your answers in the space provided.",
+                    "Use black or blue pen only.",
+                    "Read all questions carefully before answering."
+                ]
+            },
+            "university": {
+                "university_name": "UNIVERSITY NAME",
+                "department": "DEPARTMENT",
+                "course_code": "COURSE CODE",
+                "course_title": "COURSE TITLE",
+                "semester": "SEMESTER",
+                "year": "YEAR",
+                "duration": "3 Hours",
+                "max_marks": "100",
+                "date": "",
+                "instructions": [
+                    "Answer ALL questions.",
+                    "All questions carry equal marks unless specified.",
+                    "Use of calculator is permitted/not permitted.",
+                    "Start each answer on a new page."
+                ]
+            },
+            "board": {
+                "board_name": "BOARD OF EDUCATION",
+                "examination": "EXAMINATION",
+                "subject": "SUBJECT",
+                "class_standard": "CLASS/STANDARD",
+                "paper_code": "PAPER CODE",
+                "duration": "3 Hours",
+                "max_marks": "100",
+                "date": "",
+                "roll_number_section": True,
+                "instructions": [
+                    "This question paper contains X questions.",
+                    "All questions are compulsory.",
+                    "Marks are indicated against each question.",
+                    "Write your Roll Number in the space provided above."
+                ]
+            }
+        }
 
-            <label>Line 3 Text (e.g., Subject):</label><br>
-            <input type="text" name="title_line3" value="BUSINESS STUDIES" required><br>
-            <label>Font Size:</label><br>
-            <select name="title_font_size3">
-                <option value="20px">20px (Default)</option>
-                <option value="18px">18px</option>
-                <option value="22px">22px</option>
-            </select><br>
-            <label>Text Decoration:</label><br>
-            <select name="title_text_decoration3">
-                <option value="underline">underline (Default)</option>
-                <option value="none">none</option>
-                <option value="overline">overline</option>
-            </select><br><br>
-            <label>Position:</label><br>
-            <select name="title_position">
-                <option value="right">right (Default)</option>
-                <option value="top-center">top-center</option>
-                <option value="left">left</option>
-            </select>
-        </div>
+    def generate_header_markdown(self, template_type="standard", custom_data=None):
+        """Generate header in markdown format"""
+        template = self.default_templates.get(template_type, self.default_templates["standard"])
 
-        <div class="form-group">
-            <h2>Exam Details</h2>
-            <label>Grade:</label><br>
-            <input type="text" name="grade" value="11" required><br><br>
-            <label>Date:</label><br>
-            <input type="text" name="date" value="18-09-2025" required><br><br>
-            <label>Time:</label><br>
-            <input type="text" name="time" value="3 hours" required><br><br>
-            <label>Max Marks:</label><br>
-            <input type="text" name="max_marks" value="80" required><br><br>
-            <label>Table Border Style:</label><br>
-            <select name="table_border_style">
-                <option value="none">none (Default)</option>
-                <option value="1px solid black">1px solid black</option>
-                <option value="2px dashed black">2px dashed black</option>
-            </select><br>
-            <label>Padding (px):</label><br>
-            <select name="table_padding">
-                <option value="8px">8px (Default)</option>
-                <option value="5px">5px</option>
-                <option value="10px">10px</option>
-            </select><br><br>
-            <label>Position:</label><br>
-            <select name="exam_position">
-                <option value="below-title">below-title (Default)</option>
-                <option value="top-center">top-center</option>
-                <option value="below-instructions">below-instructions</option>
-            </select>
-        </div>
+        if custom_data:
+            template.update(custom_data)
 
-        <div class="form-group">
-            <h2>Instructions</h2>
-            <label>Instructions (bulleted, one per line):</label><br>
-            <textarea name="instructions" rows="10" required>- • The answers to this paper must be written on the BOOKLET provided separately.
-- • You will not be allowed to write in the first 15 minutes. This time is to be spent in
-- reading the question paper.
-- • The intended marks for the questions or parts of the question are given in ().
-- • Time given at the head of the paper is the time allowed for writing the paper.
-- • Question paper is divided into three sections: Section A, Section B and Section C.
-- • All questions are compulsory. Internal choices have been provided in two questions
-- in Section B and in one question in Section C.
-- • This paper consists of 6 printed sides</textarea><br><br>
-            <label>Border Bottom Style:</label><br>
-            <select name="instructions_border_bottom">
-                <option value="1px solid black">1px solid black (Default)</option>
-                <option value="none">none</option>
-                <option value="2px dotted black">2px dotted black</option>
-            </select><br>
-            <label>Padding (px):</label><br>
-            <select name="instructions_padding">
-                <option value="10px">10px (Default)</option>
-                <option value="5px">5px</option>
-                <option value="15px">15px</option>
-            </select><br><br>
-            <label>Position:</label><br>
-            <select name="instructions_position">
-                <option value="below-exam">below-exam (Default)</option>
-                <option value="top-center">top-center</option>
-                <option value="below-title">below-title</option>
-            </select>
-        </div>
+        # Set default date if not provided
+        if not template.get("date"):
+            template["date"] = datetime.now().strftime("%B %d, %Y")
 
-        <input type="submit" value="Generate HTML">
-    </form>
-</body>
-</html>
-'''
+        markdown = self._build_markdown_header(template, template_type)
+        return markdown
 
-# Template for generated HTML with dynamic positioning
-html_template = '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question Paper Header</title>
-    <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            border: none;
-        }}
-        {header_style}
-        .logo {{
-            width: {logo_width};
-            height: auto;
-            margin-right: {logo_margin_right};
-        }}
-        .title {{
-            font-size: {title_font_size1};
-            font-weight: {title_font_weight1};
-            margin: 0;
-        }}
-        .subtitle {{
-            font-size: {title_font_size2};
-            margin: 5px 0;
-        }}
-        .subject {{
-            font-size: {title_font_size3};
-            margin: 5px 0;
-            text-decoration: {title_text_decoration3};
-        }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-        }}
-        th, td {{
-            border: none;
-            padding: {table_padding};
-            text-align: center;
-            border-bottom: {table_border_style};
-        }}
-        .instructions {{
-            border-bottom: {instructions_border_bottom};
-            text-align: left;
-            padding: {instructions_padding};
-        }}
-        ul {{
-            padding-left: 20px;
-            margin: 0;
-        }}
-        li {{
-            margin: 5px 0;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        {logo_html}
-        {title_html}
-        {exam_html}
-        {instructions_html}
-    </div>
-</body>
-</html>
-'''
+    def _build_markdown_header(self, data, template_type):
+        """Build the markdown header based on template type"""
+        if template_type == "standard":
+            return self._build_standard_header(data)
+        elif template_type == "university":
+            return self._build_university_header(data)
+        elif template_type == "board":
+            return self._build_board_header(data)
+        else:
+            return self._build_standard_header(data)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        # Extract form data
-        logo_path = request.form['logo_path']
-        logo_width = request.form['logo_width']
-        logo_margin_right = request.form['logo_margin_right']
-        logo_position = request.form['logo_position']
-        title_line1 = request.form['title_line1']
-        title_font_size1 = request.form['title_font_size1']
-        title_font_weight1 = request.form['title_font_weight1']
-        title_line2 = request.form['title_line2']
-        title_font_size2 = request.form['title_font_size2']
-        title_line3 = request.form['title_line3']
-        title_font_size3 = request.form['title_font_size3']
-        title_text_decoration3 = request.form['title_text_decoration3']
-        title_position = request.form['title_position']
-        grade = request.form['grade']
-        date = request.form['date']
-        time = request.form['time']
-        max_marks = request.form['max_marks']
-        table_border_style = request.form['table_border_style']
-        table_padding = request.form['table_padding']
-        exam_position = request.form['exam_position']
-        instructions = request.form['instructions']
-        instructions_border_bottom = request.form['instructions_border_bottom']
-        instructions_padding = request.form['instructions_padding']
-        instructions_position = request.form['instructions_position']
+    def _build_standard_header(self, data):
+        """Build standard school header"""
+        header = f"""<div style="text-align: center;">
+<h1><strong>{data.get('school_name', 'SCHOOL NAME')}</strong></h1>
+<h2><strong>{data.get('exam_name', 'EXAMINATION NAME')}</strong></h2>
+<h3><strong>Subject: {data.get('subject', 'SUBJECT')}</strong></h3>
+</div>
 
-        # Convert instructions to HTML list items
-        instructions_lines = instructions.split('\n')
-        instructions_html_content = ''.join(f'<li>{line.strip()}</li>' for line in instructions_lines if line.strip())
+<div style="float: left;">
+<strong>Class/Grade:</strong> {data.get('class_grade', 'CLASS/GRADE')}<br>
+<strong>Duration:</strong> {data.get('duration', '3 Hours')}<br>
+<strong>Date:</strong> {data.get('date', '')}
+</div>
 
-        # Generate HTML based on positions
-        header_style = ''
-        logo_html = ''
-        title_html = ''
-        exam_html = ''
-        instructions_html = ''
+<div style="float: right;">
+<strong>Maximum Marks:</strong> {data.get('max_marks', '100')}<br>
+<strong>Name:</strong> _____________________<br>
+<strong>Roll No.:</strong> ___________________
+</div>
 
-        if logo_position == 'left' and title_position == 'right':
-            header_style = '''
-                .header-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 10px;
-                }
-                .logo-cell {
-                    width: 100px;
-                    vertical-align: top;
-                    border: none;
-                }
-                .title-cell {
-                    vertical-align: top;
-                    border: none;
-                    text-align: center;
-                }
-            '''
-            logo_html = '<table class="header-table"><tr><td class="logo-cell"><img src="{logo_path}" alt="School Logo" class="logo"></td>'.format(logo_path=logo_path)
-            title_html = '<td class="title-cell"><div class="title">{title_line1}</div><div class="subtitle">{title_line2}</div><div class="subject">{title_line3}</div></td></tr></table>'.format(
-                title_line1=title_line1, title_line2=title_line2, title_line3=title_line3)
-        elif logo_position == 'top-center' and title_position == 'top-center':
-            header_style = '''
-                .header {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 10px;
-                    border-bottom: 1px solid black;
-                }
-            '''
-            logo_html = '<div class="header"><img src="{logo_path}" alt="School Logo" class="logo"></div>'.format(logo_path=logo_path)
-            title_html = '<div class="header"><div class="title">{title_line1}</div><div class="subtitle">{title_line2}</div><div class="subject">{title_line3}</div></div>'.format(
-                title_line1=title_line1, title_line2=title_line2, title_line3=title_line3)
-        # Add more position combinations as needed (e.g., logo right/title left)
+<div style="overflow: hidden;">
+&nbsp;
+</div>
 
-        if exam_position == 'below-title':
-            exam_html = '<table>{exam_table}</table>'.format(exam_table='<tr><td>Grade: {grade}<br>Date: {date}</td><td>Time: {time}<br>Max Marks: {max_marks}</td></tr>'.format(
-                grade=grade, date=date, time=time, max_marks=max_marks))
-        elif exam_position == 'below-instructions':
-            instructions_html = '<div class="instructions"><ul>{instructions_html}</ul></div>'.format(instructions_html=instructions_html_content) + \
-                              '<table>{exam_table}</table>'.format(exam_table='<tr><td>Grade: {grade}<br>Date: {date}</td><td>Time: {time}<br>Max Marks: {max_marks}</td></tr>'.format(
-                                  grade=grade, date=date, time=time, max_marks=max_marks))
-        else:  # top-center
-            exam_html = '<table style="margin-top: 0;">{exam_table}</table>'.format(exam_table='<tr><td>Grade: {grade}<br>Date: {date}</td><td>Time: {time}<br>Max Marks: {max_marks}</td></tr>'.format(
-                grade=grade, date=date, time=time, max_marks=max_marks))
+---
 
-        if instructions_position == 'below-exam':
-            instructions_html = '<div class="instructions"><ul>{instructions_html}</ul></div>'.format(instructions_html=instructions_html_content)
-        elif instructions_position == 'below-title':
-            instructions_html = '<div class="instructions"><ul>{instructions_html}</ul></div>'.format(instructions_html=instructions_html_content) + exam_html
-            exam_html = ''
-        else:  # top-center
-            instructions_html = '<div class="instructions" style="margin-top: 0;"><ul>{instructions_html}</ul></div>'.format(instructions_html=instructions_html_content)
+### General Instructions:
+"""
 
-        # Generate final HTML
-        generated_html = html_template.format(
-            header_style=header_style,
-            logo_path=logo_path,
-            logo_width=logo_width,
-            logo_margin_right=logo_margin_right,
-            title_line1=title_line1,
-            title_font_size1=title_font_size1,
-            title_font_weight1=title_font_weight1,
-            title_line2=title_line2,
-            title_font_size2=title_font_size2,
-            title_line3=title_line3,
-            title_font_size3=title_font_size3,
-            title_text_decoration3=title_text_decoration3,
-            grade=grade,
-            date=date,
-            time=time,
-            max_marks=max_marks,
-            table_border_style=table_border_style,
-            table_padding=table_padding,
-            instructions_border_bottom=instructions_border_bottom,
-            instructions_padding=instructions_padding,
-            logo_html=logo_html,
-            title_html=title_html,
-            exam_html=exam_html,
-            instructions_html=instructions_html  # Corrected to use once
-        )
+        for instruction in data.get('instructions', []):
+            header += f"- {instruction}\n"
 
-        # Save to a BytesIO object and send as file
-        html_file = io.BytesIO(generated_html.encode('utf-8'))
-        html_file.seek(0)
-        return send_file(html_file, as_attachment=True, download_name='qp_header.html', mimetype='text/html')
+        header += "\n---\n\n"
+        return header
 
-    return render_template_string(form_template)
+    def _build_university_header(self, data):
+        """Build university-style header"""
+        header = f"""<div style="text-align: center;">
+<h1><strong>{data.get('university_name', 'UNIVERSITY NAME')}</strong></h1>
+<h2><strong>{data.get('department', 'DEPARTMENT')}</strong></h2>
+<h3><strong>{data.get('course_code', 'COURSE CODE')}: {data.get('course_title', 'COURSE TITLE')}</strong></h3>
+</div>
 
-if __name__ == '__main__':
-    app.run(debug=True)
+<div style="float: left;">
+<strong>Semester:</strong> {data.get('semester', 'SEMESTER')}<br>
+<strong>Year:</strong> {data.get('year', 'YEAR')}<br>
+<strong>Duration:</strong> {data.get('duration', '3 Hours')}
+</div>
+
+<div style="float: right;">
+<strong>Maximum Marks:</strong> {data.get('max_marks', '100')}<br>
+<strong>Date:</strong> {data.get('date', '')}<br>
+<strong>Student ID:</strong> ___________________
+</div>
+
+<div style="overflow: hidden;">
+&nbsp;
+</div>
+
+---
+
+### Instructions:
+"""
+
+        for instruction in data.get('instructions', []):
+            header += f"- {instruction}\n"
+
+        header += "\n---\n\n"
+        return header
+
+    def _build_board_header(self, data):
+        """Build board examination header"""
+        header = f"""<div style="text-align: center;">
+<h1><strong>{data.get('board_name', 'BOARD OF EDUCATION')}</strong></h1>
+<h2><strong>{data.get('examination', 'EXAMINATION')}</strong></h2>
+</div>
+
+"""
+
+        if data.get('roll_number_section', True):
+            header += """<div style="text-align: center; border: 2px solid black; padding: 10px; margin: 10px 0;">
+<strong>Roll Number: ________________________</strong>
+</div>
+
+"""
+
+        header += f"""<div style="float: left;">
+<strong>Subject:</strong> {data.get('subject', 'SUBJECT')}<br>
+<strong>Class/Standard:</strong> {data.get('class_standard', 'CLASS/STANDARD')}<br>
+<strong>Paper Code:</strong> {data.get('paper_code', 'PAPER CODE')}
+</div>
+
+<div style="float: right;">
+<strong>Duration:</strong> {data.get('duration', '3 Hours')}<br>
+<strong>Maximum Marks:</strong> {data.get('max_marks', '100')}<br>
+<strong>Date:</strong> {data.get('date', '')}
+</div>
+
+<div style="overflow: hidden;">
+&nbsp;
+</div>
+
+---
+
+### Instructions:
+"""
+
+        for instruction in data.get('instructions', []):
+            header += f"- {instruction}\n"
+
+        header += "\n---\n\n"
+        return header
+
+    def save_template(self, template_name, template_data, templates_dir="templates"):
+        """Save custom template to file"""
+        # Create templates directory if it doesn't exist
+        Path(templates_dir).mkdir(exist_ok=True)
+
+        template_file = Path(templates_dir) / f"{template_name}.json"
+
+        with open(template_file, 'w', encoding='utf-8') as f:
+            json.dump(template_data, f, indent=4, ensure_ascii=False)
+
+        return str(template_file)
+
+    def load_template(self, template_name, templates_dir="templates"):
+        """Load custom template from file"""
+        template_file = Path(templates_dir) / f"{template_name}.json"
+
+        if not template_file.exists():
+            raise FileNotFoundError(f"Template '{template_name}' not found in {templates_dir}")
+
+        with open(template_file, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def list_templates(self, templates_dir="templates"):
+        """List available custom templates"""
+        templates_path = Path(templates_dir)
+
+        if not templates_path.exists():
+            return []
+
+        template_files = list(templates_path.glob("*.json"))
+        return [f.stem for f in template_files]
+
+    def create_interactive_header(self):
+        """Interactive CLI for creating headers"""
+        print("🎓 Pariksha Header Generator")
+        print("=" * 40)
+
+        # Choose template type
+        print("\nAvailable template types:")
+        for i, template_type in enumerate(self.default_templates.keys(), 1):
+            print(f"{i}. {template_type.title()}")
+
+        try:
+            choice = int(input("\nSelect template type (1-3): ")) - 1
+            template_types = list(self.default_templates.keys())
+            selected_template = template_types[choice]
+        except (ValueError, IndexError):
+            print("Invalid choice. Using standard template.")
+            selected_template = "standard"
+
+        # Get custom data
+        custom_data = {}
+        template = self.default_templates[selected_template]
+
+        print(f"\n📝 Customizing {selected_template} template:")
+        print("(Press Enter to use default values)")
+
+        for key, default_value in template.items():
+            if key == "instructions":
+                continue  # Handle instructions separately
+
+            if isinstance(default_value, bool):
+                continue  # Skip boolean values for now
+
+            display_key = key.replace("_", " ").title()
+            user_input = input(f"{display_key} [{default_value}]: ").strip()
+
+            if user_input:
+                custom_data[key] = user_input
+
+        # Handle instructions
+        print("\nCustomize instructions (press Enter twice to finish):")
+        custom_instructions = []
+        while True:
+            instruction = input("Instruction: ").strip()
+            if not instruction:
+                break
+            custom_instructions.append(instruction)
+
+        if custom_instructions:
+            custom_data["instructions"] = custom_instructions
+
+        # Generate header
+        header_markdown = self.generate_header_markdown(selected_template, custom_data)
+
+        # Save to file
+        output_file = f"header_{selected_template}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write(header_markdown)
+
+        print(f"\n✅ Header saved to: {output_file}")
+        print("\n📋 Generated Header Preview:")
+        print("-" * 40)
+        print(header_markdown[:500] + "..." if len(header_markdown) > 500 else header_markdown)
+
+        return output_file
+
+
+def main():
+    """Main function for command line usage"""
+    parser = argparse.ArgumentParser(description="Pariksha Header Generator")
+    parser.add_argument("--template", "-t", choices=["standard", "university", "board"],
+                       default="standard", help="Template type to use")
+    parser.add_argument("--interactive", "-i", action="store_true",
+                       help="Run in interactive mode")
+    parser.add_argument("--output", "-o", help="Output file name")
+    parser.add_argument("--config", "-c", help="JSON configuration file")
+
+    args = parser.parse_args()
+
+    generator = HeaderGenerator()
+
+    if args.interactive:
+        generator.create_interactive_header()
+        return
+
+    # Load configuration if provided
+    custom_data = {}
+    if args.config and os.path.exists(args.config):
+        with open(args.config, 'r', encoding='utf-8') as f:
+            custom_data = json.load(f)
+
+    # Generate header
+    header_markdown = generator.generate_header_markdown(args.template, custom_data)
+
+    # Save to file
+    output_file = args.output or f"header_{args.template}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(header_markdown)
+
+    print(f"✅ Header generated and saved to: {output_file}")
+
+
+if __name__ == "__main__":
+    # Ensure Windows compatibility
+    if sys.platform.startswith('win'):
+        # Set UTF-8 encoding for Windows console
+        import locale
+        try:
+            locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+        except locale.Error:
+            try:
+                locale.setlocale(locale.LC_ALL, 'C.UTF-8')
+            except locale.Error:
+                pass  # Use system default
+
+    main()

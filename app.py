@@ -242,6 +242,10 @@ def generate_pdf_from_markdown(md_content, font_style, font_size, line_spacing, 
             margin: 0;
             padding: 0;
         }}
+        .first-cell-no-global-font {{
+            font-family: inherit !important;
+            font-size: inherit !important;
+        }}
         h1, h2, h3, h4, h5, h6 {{
             font-weight: bold !important;
             color: #000 !important;
@@ -465,6 +469,10 @@ def generate_html(md_content, font_style, font_size, line_spacing, pagination):
         line-height: {line_spacing};
         margin: 20px;
     }}
+    .first-cell-no-global-font {{
+        font-family: inherit !important;
+        font-size: inherit !important;
+    }}
     h1, h2, h3, h4, h5, h6 {{
         font-weight: bold !important;
         color: #000 !important;
@@ -652,6 +660,7 @@ markdown_help_content = """
   ```
 - **Link**: `[Link text](URL)`
 - **Blockquote**: `> Quote text`
+- **Section Header**: `<p style="text-align: center;"><strong>Section Name</strong></p>`
 """
 
 # Display and edit cells
@@ -806,7 +815,7 @@ for idx, cell in enumerate(st.session_state.cells):
             # Save, Preview, Print PDF buttons
             def generate_md(cells, paper_name, marks_position="Beginning"):
                 md = ""
-                for cell in cells:
+                for idx, cell in enumerate(cells):
                     if cell.type == 'textbox':
                         question_num = cell.metadata.get('question_num', 0)
                         marks = cell.metadata.get('marks', 0)
@@ -839,6 +848,10 @@ for idx, cell in enumerate(st.session_state.cells):
                             # Add marks at the end if specified
                             if marks > 0:
                                 content += f" **[Marks: {marks}]**"
+
+                        # Wrap first cell with special class to exclude from global font settings
+                        if idx == 0:
+                            content = f'<div class="first-cell-no-global-font">\n{content}\n</div>'
 
                         md += content + "\n\n"
 

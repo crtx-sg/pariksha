@@ -45,6 +45,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('app.py', '.'),
+        ('header.py', '.'),
         ('README.md', '.'),
         ('requirements.txt', '.'),
         *streamlit_data,

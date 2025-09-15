@@ -1,0 +1,16 @@
+{
+    "school_name": "Green Valley High School",
+    "exam_name": "Mid-Term Examination - 2025",
+    "subject": "Mathematics",
+    "class_grade": "Grade 10",
+    "duration": "3 Hours",
+    "max_marks": "80",
+    "date": "March 15, 2025",
+    "instructions": [
+        "All questions are compulsory.",
+        "Use only black or blue pen.",
+        "Calculator is not allowed.",
+        "Draw neat diagrams wherever necessary.",
+        "Show all working steps clearly."
+    ]
+}

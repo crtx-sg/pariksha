@@ -80,7 +80,9 @@ def build_application():
     # Copy additional files
     additional_files = [
         "README.md",
-        "requirements.txt"
+        "requirements.txt",
+        "header.py",
+        "sample_header_config.json"
     ]
 
     for file_name in additional_files:
@@ -106,15 +108,34 @@ pause
     batch_file.write_text(batch_content)
     print("🚀 Created launcher batch file")
 
+    # Copy header generator scripts
+    header_batch_source = current_dir / "windows" / "header_generator.bat"
+    if header_batch_source.exists():
+        header_batch_dest = dist_dir / "Header_Generator.bat"
+        shutil.copy2(header_batch_source, header_batch_dest)
+        print("📝 Copied header generator batch file")
+
+    header_ps1_source = current_dir / "windows" / "header_generator.ps1"
+    if header_ps1_source.exists():
+        header_ps1_dest = dist_dir / "Header_Generator.ps1"
+        shutil.copy2(header_ps1_source, header_ps1_dest)
+        print("📝 Copied header generator PowerShell script")
+
     # Create user guide
     user_guide = '''# Quick Start Guide
 
 ## Running the Application
 
+### Main Application
 1. Double-click "Start_Pariksha.bat"
 2. Wait for the application to load (may take 30-60 seconds on first run)
 3. The application will open in your default web browser
 4. Start creating your question papers!
+
+### Header Generator Tool
+1. Double-click "Header_Generator.bat" to create professional question paper headers
+2. Choose from interactive mode or quick templates
+3. Generated headers can be copied into your question papers
 
 ## Stopping the Application
 
@@ -138,10 +159,13 @@ pause
 ## Files and Folders
 
 - `Pariksha/` - Main application files
-- `Start_Pariksha.bat` - Double-click this to start
+- `Start_Pariksha.bat` - Double-click this to start the main application
+- `Header_Generator.bat` - Double-click this to create question paper headers
+- `header.py` - Header generator Python script (can be run directly)
 - `papers/` - Your saved question papers (created automatically)
 - `metadata/` - Configuration files (created automatically)
 - `downloads/` - Downloaded images and assets (created automatically)
+- `templates/` - Custom header templates (created automatically)
 
 For detailed usage instructions, see README.md
 '''
@@ -151,7 +175,7 @@ For detailed usage instructions, see README.md
     print("📖 Created user guide")
 
     # Create folders that will be needed
-    folders_to_create = ['papers', 'metadata', 'downloads']
+    folders_to_create = ['papers', 'metadata', 'downloads', 'templates']
     for folder in folders_to_create:
         folder_path = dist_dir / folder
         folder_path.mkdir(exist_ok=True)
