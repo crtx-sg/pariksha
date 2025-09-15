@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Launcher script for Teacher Question Paper Drafting System
+Launcher script for Pariksha - Question Paper Drafting System for Teachers
 This script automatically opens the web browser and starts the Streamlit app
 """
 
@@ -27,7 +27,7 @@ def open_browser(url):
 
 def main():
     """Main launcher function"""
-    print("🚀 Starting Teacher Question Paper Drafting System...")
+    print("🚀 Starting Pariksha - Question Paper Drafting System for Teachers...")
     print("📚 Loading application dependencies...")
 
     # Get the directory where this script is located

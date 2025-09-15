@@ -128,7 +128,7 @@ st.markdown("""
 </script>
 """, unsafe_allow_html=True)
 
-st.title("Teacher Question Paper Drafting System")
+st.title("Pariksha - Question Paper Drafting System for Teachers")
 
 # Simple cell class to replace notebook functionality
 class Cell:

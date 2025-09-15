@@ -2,7 +2,7 @@
 # Run this with: powershell -ExecutionPolicy Bypass -File build.ps1
 
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "    Building Teacher Question Paper System for Windows" -ForegroundColor Cyan
+Write-Host "    Building Pariksha for Windows" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -18,11 +18,11 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         Write-Host "✅ Build completed successfully!" -ForegroundColor Green
-        Write-Host "📦 Check the 'Windows_App_Distribution' folder for the application." -ForegroundColor Cyan
+        Write-Host "📦 Check the 'Pariksha_Windows_App' folder for the application." -ForegroundColor Cyan
         Write-Host ""
         Write-Host "📋 Next steps:" -ForegroundColor Yellow
-        Write-Host "1. Test the app by running Start_Question_Paper_System.bat" -ForegroundColor White
-        Write-Host "2. Zip the Windows_App_Distribution folder for distribution" -ForegroundColor White
+        Write-Host "1. Test the app by running Start_Pariksha.bat" -ForegroundColor White
+        Write-Host "2. Zip the Pariksha_Windows_App folder for distribution" -ForegroundColor White
         Write-Host "3. Share with end users" -ForegroundColor White
     } else {
         Write-Host "❌ Build failed! Check the error messages above." -ForegroundColor Red

@@ -34,7 +34,7 @@ def check_requirements():
 
 def build_application():
     """Build the Windows application"""
-    print("🚀 Building Teacher Question Paper System for Windows...")
+    print("🚀 Building Pariksha for Windows...")
     print("="*60)
 
     # Check requirements
@@ -59,7 +59,7 @@ def build_application():
         return False
 
     # Create distribution folder
-    dist_dir = current_dir / "Windows_App_Distribution"
+    dist_dir = current_dir / "Pariksha_Windows_App"
     if dist_dir.exists():
         shutil.rmtree(dist_dir)
 
@@ -67,8 +67,8 @@ def build_application():
     print(f"📦 Created distribution directory: {dist_dir}")
 
     # Copy built application
-    app_source = current_dir / "dist" / "TeacherQuestionPaperSystem"
-    app_dest = dist_dir / "TeacherQuestionPaperSystem"
+    app_source = current_dir / "dist" / "Pariksha"
+    app_dest = dist_dir / "Pariksha"
 
     if app_source.exists():
         shutil.copytree(app_source, app_dest)
@@ -91,18 +91,18 @@ def build_application():
 
     # Create launcher batch file
     batch_content = '''@echo off
-title Teacher Question Paper Drafting System
-echo Starting Teacher Question Paper Drafting System...
+title Pariksha - Question Paper Drafting System for Teachers
+echo Starting Pariksha - Question Paper Drafting System for Teachers...
 echo.
 echo The application will open in your web browser.
 echo To stop the application, close this window.
 echo.
 cd /d "%~dp0"
-"TeacherQuestionPaperSystem\\TeacherQuestionPaperSystem.exe"
+"Pariksha\\Pariksha.exe"
 pause
 '''
 
-    batch_file = dist_dir / "Start_Question_Paper_System.bat"
+    batch_file = dist_dir / "Start_Pariksha.bat"
     batch_file.write_text(batch_content)
     print("🚀 Created launcher batch file")
 
@@ -111,7 +111,7 @@ pause
 
 ## Running the Application
 
-1. Double-click "Start_Question_Paper_System.bat"
+1. Double-click "Start_Pariksha.bat"
 2. Wait for the application to load (may take 30-60 seconds on first run)
 3. The application will open in your default web browser
 4. Start creating your question papers!
@@ -137,8 +137,8 @@ pause
 
 ## Files and Folders
 
-- `TeacherQuestionPaperSystem/` - Main application files
-- `Start_Question_Paper_System.bat` - Double-click this to start
+- `Pariksha/` - Main application files
+- `Start_Pariksha.bat` - Double-click this to start
 - `papers/` - Your saved question papers (created automatically)
 - `metadata/` - Configuration files (created automatically)
 - `downloads/` - Downloaded images and assets (created automatically)
@@ -166,8 +166,8 @@ For detailed usage instructions, see README.md
     print("🎉 BUILD COMPLETED SUCCESSFULLY!")
     print(f"📦 Distribution folder: {dist_dir}")
     print("\n📋 Next steps:")
-    print("1. Test the application by running Start_Question_Paper_System.bat")
-    print("2. Zip the Windows_App_Distribution folder for distribution")
+    print("1. Test the application by running Start_Pariksha.bat")
+    print("2. Zip the Pariksha_Windows_App folder for distribution")
     print("3. Share the zip file with users")
     print("\n💡 Tips:")
     print("- The first run may take longer as Windows extracts files")

@@ -1,4 +1,4 @@
-# 📝 Teacher Question Paper Drafting System
+# 📝 Pariksha - Question Paper Drafting System for Teachers
 
 A comprehensive web-based application for creating, editing, and generating professional question papers with advanced formatting capabilities.
 
@@ -227,4 +227,4 @@ For issues, questions, or feature requests:
 
 ---
 
-**Created for educators, by educators. Making question paper creation simple and professional.**
+**Pariksha - Created for educators, by educators. Making question paper creation simple and professional.**

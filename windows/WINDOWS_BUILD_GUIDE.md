@@ -1,6 +1,6 @@
 # 🪟 Windows Application Build Guide
 
-This guide explains how to create a standalone Windows executable for the Teacher Question Paper Drafting System.
+This guide explains how to create a standalone Windows executable for Pariksha - Question Paper Drafting System for Teachers.
 
 ## 📋 Prerequisites
 
@@ -65,12 +65,12 @@ This guide explains how to create a standalone Windows executable for the Teache
 After successful build, you'll find:
 
 ```
-Windows_App_Distribution/
-├── TeacherQuestionPaperSystem/          # Main application folder
-│   ├── TeacherQuestionPaperSystem.exe   # Main executable
+Pariksha_Windows_App/
+├── Pariksha/                            # Main application folder
+│   ├── Pariksha.exe                     # Main executable
 │   ├── app.py                           # Application source
 │   └── [various library files]         # Python runtime & libraries
-├── Start_Question_Paper_System.bat     # Double-click to run
+├── Start_Pariksha.bat                   # Double-click to run
 ├── papers/                              # Saved question papers folder
 ├── metadata/                            # Application data folder
 ├── downloads/                           # Downloaded assets folder
@@ -83,9 +83,9 @@ Windows_App_Distribution/
 
 ### Installing the Application
 
-1. **Download** the Windows_App_Distribution folder (usually as a ZIP file)
-2. **Extract** to a location like `C:\TeacherQuestionPaper\`
-3. **Double-click** `Start_Question_Paper_System.bat`
+1. **Download** the Pariksha_Windows_App folder (usually as a ZIP file)
+2. **Extract** to a location like `C:\Pariksha\`
+3. **Double-click** `Start_Pariksha.bat`
 4. **Wait** for the application to load (30-60 seconds first time)
 5. **Use** the application in your web browser
 
@@ -145,7 +145,7 @@ To avoid Windows security warnings:
 1. **Get a code signing certificate** from a trusted CA
 2. **Sign the executable** using:
    ```cmd
-   signtool sign /f certificate.p12 /p password /t http://timestamp.url TeacherQuestionPaperSystem.exe
+   signtool sign /f certificate.p12 /p password /t http://timestamp.url Pariksha.exe
    ```
 
 ### Antivirus Whitelisting

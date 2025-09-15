@@ -1,8 +1,8 @@
 @echo off
-title Building Teacher Question Paper System for Windows
+title Building Pariksha for Windows
 echo.
 echo ============================================================
-echo    Building Teacher Question Paper System for Windows
+echo    Building Pariksha for Windows
 echo ============================================================
 echo.
 echo This will create a standalone Windows application that
@@ -18,6 +18,6 @@ python build_windows_app.py
 echo.
 echo ============================================================
 echo Build process completed!
-echo Check the Windows_App_Distribution folder for the result.
+echo Check the Pariksha_Windows_App folder for the result.
 echo ============================================================
 pause
